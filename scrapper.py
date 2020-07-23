@@ -69,7 +69,7 @@ class Scrapper:
             temp = pd.DataFrame([[self.chapter_label, verse, content]],
                                 columns=['chapter', 'verse', 'content'])
             df = df.append(temp, ignore_index=True)
-        return df[:-1]                                    # Will look into a more efficient fix later.
+        return df                                              # Will look into a more efficient fix later.
 
 
 class UrlContentIterator:

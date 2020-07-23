@@ -29,19 +29,19 @@ ENGLISH_VERSION = 'KJV'
 BASE_URL_ENGLISH= r'https://www.bible.com/bible/1/'
 
 LUGANDA_VERSION = 'EEEE'
-BASE_URL_LUGANDA = r'https://www.bible.com/versions/1625/'
+BASE_URL_LUGANDA = r'https://www.bible.com/bible/1625/'
 
 def main():
     # 1. Create directories
     for book in BOOKS:
-        make_dirs('ENG', book)          # English
+        # make_dirs('ENG', book)          # English
         make_dirs('LUG', book)          # Luganda
 
     # 2. Web scrapping
     #    English
-    scrapping(BOOKS, 'ENG', ENGLISH_VERSION, BASE_URL_ENGLISH)
+    # scrapping(BOOKS, 'ENG', ENGLISH_VERSION, BASE_URL_ENGLISH)
     #    Luganda
-    # scrapping(BOOKS, 'LUG', LUGANDA_VERSION, BASE_URL_LUGANDA)
+    scrapping(BOOKS, 'LUG', LUGANDA_VERSION, BASE_URL_LUGANDA)
 
     # Should run like magic.
 
@@ -65,11 +65,62 @@ class Scrapper:
 
             content_object = paragraph.select('span.label + span.content')
             content = content_object[0].get_text()
-
             temp = pd.DataFrame([[self.chapter_label, verse, content]],
                                 columns=['chapter', 'verse', 'content'])
             df = df.append(temp, ignore_index=True)
-        return df                                              # Will look into a more efficient fix later.
+        return df
+
+class LugScrapper(Scrapper):
+    """
+        Extends the Scrapper class to scrap Luganda.
+    """
+    def __init__(self, chapter_label, chapter_content):
+        """
+            This is essentially the same as the Scrapper.__init__().
+        """
+        super().__init__(chapter_label, chapter_content)
+
+    def scrap(self):
+        """
+            This function scraps the bible.com/EEEE for Luganda.
+        """
+        paragraphs = self.chapter_content.find_all('div', class_='p')
+
+        # Get all the verses.
+        df = pd.DataFrame(columns=['chapter', 'verse', 'content'])
+        for paragraph in paragraphs:
+            dump = self._parse_paragraph(paragraph)
+            for verse, content in dump:
+                temp = pd.DataFrame([[self.chapter_label, verse, content]],
+                                columns=['chapter', 'verse', 'content'])
+                df = df.append(temp, ignore_index=True)
+        return df
+
+    def _parse_paragraph(self, paragraph):
+        """
+            Extracts the verse number and the content from an HTML object.
+        """
+        verse_html = paragraph.select('.verse .label')
+        verses = []
+        for label in verse_html:
+            verse = None
+            try:
+                verse = int(label.get_text())
+            except ValueError:
+                continue
+            verses.append(verse)
+
+        verse_content = []
+        content_html = paragraph.select('.verse .content')
+        for content in content_html:
+            c_ = None
+            temp = content.get_text()
+            if temp.isspace():
+                continue
+            else:
+                c_ = temp.strip()
+                verse_content.append(c_)
+        return zip(verses, verse_content)
 
 
 class UrlContentIterator:
@@ -80,7 +131,7 @@ class UrlContentIterator:
     def __init__(self, book, bible_version, base_url):
         self.book = book
         self.tracker = 0                # First chapter is one (1).
-        self.last_tracker = 0
+        # self.last_tracker = 0
         self.version = bible_version
         self.base_url = base_url
 
@@ -102,18 +153,21 @@ class UrlContentIterator:
         """
         # Advance and update to chapter
         self.tracker += 1
-        if self.tracker == self.last_tracker + 1:
-            URL = os.path.join(self.base_url, f'{self.book}.{self.tracker}.{self.version}')
-            request = requests.get(URL)
-            if request.status_code != 200:
-                raise RuntimeError(f"Content at {URL} couldn't be retrieved.")
+
+        URL = os.path.join(self.base_url, f'{self.book}.{self.tracker}.{self.version}')
+        request = requests.get(URL)
+
+        if request.status_code != 200:
+            raise RuntimeError(f"Content at {URL} couldn't be retrieved.")
+
+        if not request.history:
             content = BeautifulSoup(request.content, 'html.parser')
             chapter = content.find('div', class_="chapter")
             chapter_label = int(content.find('div', class_='label').get_text())
-            self.last_tracker = chapter_label
             return (chapter_label, chapter)
         else:
             raise StopIteration()
+
 
 def make_dirs(lang, dir):
     """
@@ -130,9 +184,13 @@ def scrapping(books, lang, version, base_url):
     """
     for book in tqdm(books, desc=f'{lang} Scrapping: '):
         path = os.path.join(os.getcwd(), lang, book)
-        eng_content = UrlContentIterator(book, version, base_url)
-        for content in eng_content:
-            scrap = Scrapper(content[0], content[1])
+        dump = UrlContentIterator(book, version, base_url)
+        for content in dump:
+            scrap = None
+            if lang == 'LUG':
+                scrap = LugScrapper(content[0], content[1])
+            else:
+                scrap = Scrapper(content[0], content[1])
             scrap_ = scrap.scrap()
             scrap_.to_csv(os.path.join(path, f'{content[0]}.csv'), index=False)
 

@@ -106,7 +106,7 @@ class UrlContentIterator:
             URL = os.path.join(self.base_url, f'{self.book}.{self.tracker}.{self.version}')
             request = requests.get(URL)
             if request.status_code != 200:
-                raise RunTimeError(f"Content at {URL} couldn't be retrieved.")
+                raise RuntimeError(f"Content at {URL} couldn't be retrieved.")
             content = BeautifulSoup(request.content, 'html.parser')
             chapter = content.find('div', class_="chapter")
             chapter_label = int(content.find('div', class_='label').get_text())

@@ -63,9 +63,16 @@ class Scrapper:
             verse_object = paragraph.select('span.label')
             verse = int(verse_object[0].get_text())
 
-            content_object = paragraph.select('span.label + span.content')
-            content = content_object[0].get_text()
-            temp = pd.DataFrame([[self.chapter_label, verse, content]],
+            verse_html = paragraph.select('.verse .content')
+            verse_holder = ''
+            for content in verse_html:
+                temp_ = content.get_text()
+                if temp_.isspace():
+                    continue
+                else:
+                    verse_holder += temp_
+
+            temp = pd.DataFrame([[self.chapter_label, verse, verse_holder]],
                                 columns=['chapter', 'verse', 'content'])
             df = df.append(temp, ignore_index=True)
         return df

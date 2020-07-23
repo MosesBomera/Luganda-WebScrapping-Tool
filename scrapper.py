@@ -41,7 +41,7 @@ def main():
     #    English
     scrapping(BOOKS, 'ENG', ENGLISH_VERSION, BASE_URL_ENGLISH)
     #    Luganda
-    scrapping(BOOKS, 'LUG', LUGANDA_VERSION, BASE_URL_LUGANDA)
+    # scrapping(BOOKS, 'LUG', LUGANDA_VERSION, BASE_URL_LUGANDA)
 
     # Should run like magic.
 

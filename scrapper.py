@@ -134,7 +134,7 @@ def scrapping(books, lang, version, base_url):
         for content in eng_content:
             scrap = Scrapper(content[0], content[1])
             scrap_ = scrap.scrap()
-            scrap_.to_csv(os.path.join(path, f'{content[0]}.csv'))
+            scrap_.to_csv(os.path.join(path, f'{content[0]}.csv'), index=False)
 
 
 if __name__ == '__main__':

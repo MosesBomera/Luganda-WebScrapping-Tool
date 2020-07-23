@@ -34,12 +34,12 @@ BASE_URL_LUGANDA = r'https://www.bible.com/bible/1625/'
 def main():
     # 1. Create directories
     for book in BOOKS:
-        # make_dirs('ENG', book)          # English
+        make_dirs('ENG', book)          # English
         make_dirs('LUG', book)          # Luganda
 
     # 2. Web scrapping
     #    English
-    # scrapping(BOOKS, 'ENG', ENGLISH_VERSION, BASE_URL_ENGLISH)
+    scrapping(BOOKS, 'ENG', ENGLISH_VERSION, BASE_URL_ENGLISH)
     #    Luganda
     scrapping(BOOKS, 'LUG', LUGANDA_VERSION, BASE_URL_LUGANDA)
 
